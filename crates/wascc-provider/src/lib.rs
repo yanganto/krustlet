@@ -41,6 +41,7 @@ use kubelet::provider::Provider;
 use kubelet::provider::ProviderError;
 use kubelet::store::Store;
 
+use kubelet::state::prelude::ResourceState;
 use kubelet::volume::Ref;
 use log::{debug, info};
 use tempfile::NamedTempFile;
@@ -230,6 +231,10 @@ pub struct PodState {
     image_pull_backoff_strategy: ExponentialBackoffStrategy,
     crash_loop_backoff_strategy: ExponentialBackoffStrategy,
     shared: SharedPodState,
+}
+
+impl ResourceState for PodState {
+    type Manifest = Pod;
 }
 
 // No cleanup state needed, we clean up when dropping PodState.

@@ -9,9 +9,10 @@ use kube::Client as KubeClient;
 use kube_runtime::watcher::Event;
 use log::{debug, error, warn};
 
+use crate::pod::state::run_to_completion;
 use crate::pod::{Pod, PodKey};
 use crate::provider::Provider;
-use crate::state::{run_to_completion, AsyncDrop};
+use crate::state::AsyncDrop;
 use tokio::sync::RwLock;
 
 /// A per-pod queue that takes incoming Kubernetes events and broadcasts them to the correct queue

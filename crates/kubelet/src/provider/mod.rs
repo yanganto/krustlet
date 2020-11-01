@@ -11,7 +11,7 @@ use crate::container::Container;
 use crate::log::Sender;
 use crate::node::Builder;
 use crate::pod::Pod;
-use crate::state::{AsyncDrop, State};
+use crate::state::{AsyncDrop, ResourceState, State};
 
 /// A back-end for a Kubelet.
 ///
@@ -31,11 +31,16 @@ use crate::state::{AsyncDrop, State};
 /// use async_trait::async_trait;
 /// use kubelet::pod::Pod;
 /// use kubelet::provider::Provider;
-/// use kubelet::state::{Stub, AsyncDrop};
+/// use kubelet::pod::state::Stub;
+/// use kubelet::state::prelude::*;
 ///
 /// struct MyProvider;
 ///
 /// struct PodState;
+///
+/// impl ResourceState for PodState {
+///     type Manifest = Pod;
+/// }
 ///
 /// #[async_trait]
 /// impl AsyncDrop for PodState {
@@ -60,7 +65,7 @@ use crate::state::{AsyncDrop, State};
 #[async_trait]
 pub trait Provider: Sized {
     /// The state that is passed between Pod state handlers.
-    type PodState: 'static + Send + Sync + AsyncDrop;
+    type PodState: 'static + Send + Sync + AsyncDrop + ResourceState<Manifest = Pod>;
 
     /// The initial state for Pod state machine.
     type InitialState: Default + State<Self::PodState>;

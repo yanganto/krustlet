@@ -49,7 +49,7 @@ use tokio::sync::RwLock;
 use wasi_runtime::Runtime;
 
 mod states;
-
+use kubelet::state::prelude::ResourceState;
 use states::registered::Registered;
 use states::terminated::Terminated;
 
@@ -111,6 +111,10 @@ pub struct PodState {
     image_pull_backoff_strategy: ExponentialBackoffStrategy,
     crash_loop_backoff_strategy: ExponentialBackoffStrategy,
     shared: SharedPodState,
+}
+
+impl ResourceState for PodState {
+    type Manifest = Pod;
 }
 
 // No cleanup state needed, we clean up when dropping PodState.
