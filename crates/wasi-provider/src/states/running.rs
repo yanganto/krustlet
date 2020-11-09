@@ -2,7 +2,7 @@ use k8s_openapi::api::core::v1::Pod as KubePod;
 use kube::api::Api;
 use kubelet::container::patch_container_status;
 use kubelet::container::{ContainerKey, Status};
-use kubelet::state::prelude::*;
+use kubelet::pod::state::prelude::*;
 use log::error;
 
 use super::completed::Completed;
@@ -16,7 +16,7 @@ use crate::PodState;
 pub struct Running;
 
 #[async_trait::async_trait]
-impl State<PodState> for Running {
+impl State<PodState, PodStatus> for Running {
     async fn next(self: Box<Self>, pod_state: &mut PodState, pod: &Pod) -> Transition<PodState> {
         let client: Api<KubePod> = Api::namespaced(
             kube::Client::new(pod_state.shared.kubeconfig.clone()),
@@ -29,7 +29,7 @@ impl State<PodState> for Running {
             // TODO: implement a container state machine such that it will self-update the Kubernetes API as it transitions through these stages.
 
             if let Err(e) =
-                patch_container_status(&client, &pod, ContainerKey::App(name.clone()), &status)
+                patch_container_status(&client, &pod, &ContainerKey::App(name.clone()), &status)
                     .await
             {
                 error!("Unable to patch status, will retry on next update: {:?}", e);
@@ -61,7 +61,7 @@ impl State<PodState> for Running {
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Running, "Running")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Running, "Running"))
     }
 }

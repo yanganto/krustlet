@@ -7,9 +7,9 @@ use log::{debug, error, info};
 use tokio::sync::Mutex;
 
 use kubelet::container::{Container, ContainerKey, Handle as ContainerHandle};
+use kubelet::pod::state::prelude::*;
 use kubelet::pod::{Handle, PodKey};
 use kubelet::provider::Provider;
-use kubelet::state::prelude::*;
 
 use crate::rand::Rng;
 use crate::PodState;
@@ -144,7 +144,7 @@ async fn start_container(
 pub struct Starting;
 
 #[async_trait::async_trait]
-impl State<PodState> for Starting {
+impl State<PodState, PodStatus> for Starting {
     async fn next(self: Box<Self>, pod_state: &mut PodState, pod: &Pod) -> Transition<PodState> {
         info!("Starting containers for pod {:?}", pod.name());
 
@@ -193,7 +193,7 @@ impl State<PodState> for Starting {
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Pending, "Starting")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Pending, "Starting"))
     }
 }

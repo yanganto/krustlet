@@ -1,7 +1,7 @@
 use super::image_pull::ImagePull;
 use crate::PodState;
 use kubelet::backoff::BackoffStrategy;
-use kubelet::state::prelude::*;
+use kubelet::pod::state::prelude::*;
 
 /// Kubelet encountered an error when pulling container image.
 #[derive(Default, Debug, TransitionTo)]
@@ -9,7 +9,7 @@ use kubelet::state::prelude::*;
 pub struct ImagePullBackoff;
 
 #[async_trait::async_trait]
-impl State<PodState> for ImagePullBackoff {
+impl State<PodState, PodStatus> for ImagePullBackoff {
     async fn next(self: Box<Self>, pod_state: &mut PodState, _pod: &Pod) -> Transition<PodState> {
         pod_state.image_pull_backoff_strategy.wait().await;
         Transition::next(self, ImagePull)
@@ -19,7 +19,7 @@ impl State<PodState> for ImagePullBackoff {
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Pending, "ImagePullBackoff")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Pending, "ImagePullBackoff"))
     }
 }

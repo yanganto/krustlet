@@ -7,9 +7,9 @@ use log::{debug, error, info};
 use tokio::sync::Mutex;
 
 use kubelet::container::{Container, ContainerKey};
+use kubelet::pod::state::prelude::*;
 use kubelet::pod::{Handle, PodKey};
 use kubelet::provider;
-use kubelet::state::prelude::*;
 use kubelet::volume::Ref;
 
 use crate::wasi_runtime::{self, HandleFactory, Runtime, WasiRuntime};
@@ -97,7 +97,7 @@ impl Starting {
 }
 
 #[async_trait::async_trait]
-impl State<PodState> for Starting {
+impl State<PodState, PodStatus> for Starting {
     async fn next(self: Box<Self>, pod_state: &mut PodState, pod: &Pod) -> Transition<PodState> {
         let mut container_handles: ContainerHandleMap = HashMap::new();
 
@@ -133,7 +133,7 @@ impl State<PodState> for Starting {
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Pending, "Starting")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Pending, "Starting"))
     }
 }

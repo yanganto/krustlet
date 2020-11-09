@@ -2,7 +2,7 @@
 //!
 //! Example Pod state machine:
 //! ```
-//! use kubelet::state::prelude::*;
+//! use kubelet::pod::state::prelude::*;
 //! use kubelet::pod::Pod;
 //!
 //! #[derive(Debug, TransitionTo)]
@@ -19,7 +19,7 @@
 //! }
 //!
 //! #[async_trait::async_trait]
-//! impl State<PodState> for TestState {
+//! impl State<PodState, PodStatus> for TestState {
 //!     async fn next(
 //!         self: Box<Self>,
 //!         _pod_state: &mut PodState,
@@ -32,8 +32,8 @@
 //!         &self,
 //!         _pod_state: &mut PodState,
 //!         _pod: &Pod,
-//!     ) -> anyhow::Result<serde_json::Value> {
-//!         Ok(serde_json::json!(null))
+//!     ) -> anyhow::Result<PodStatus> {
+//!         Ok(Default::default())
 //!     }
 //! }
 //! ```
@@ -162,8 +162,6 @@
 //! }
 //! ```
 
-pub mod prelude;
-
 #[cfg(feature = "derive")]
 #[doc(hidden)]
 pub use kubelet_derive::*;
@@ -180,15 +178,15 @@ pub use kubelet_derive::*;
 ///     state: Box::new(Stub),
 /// });
 /// ```
-pub struct StateHolder<S: ResourceState> {
+pub struct StateHolder<S: ResourceState, Status> {
     // This is private, preventing manual construction of Transition::Next
-    pub(crate) state: Box<dyn State<S>>,
+    pub(crate) state: Box<dyn State<S, Status>>,
 }
 
 /// Represents result of state execution and which state to transition to next.
-pub enum Transition<S: ResourceState> {
+pub enum Transition<S: ResourceState, Status> {
     /// Transition to new state.
-    Next(StateHolder<S>),
+    Next(StateHolder<S, Status>),
     /// Stop executing the state machine and report the result of the execution.
     Complete(anyhow::Result<()>),
 }
@@ -196,14 +194,14 @@ pub enum Transition<S: ResourceState> {
 /// Mark an edge exists between two states.
 pub trait TransitionTo<S> {}
 
-impl<S: ResourceState> Transition<S> {
+impl<S: ResourceState, Status> Transition<S, Status> {
     // This prevents user from having to box everything AND allows us to enforce edge constraint.
     /// Construct Transition::Next from old state and new state. Both states must be State<PodState>
     /// with matching PodState. Input state must implement TransitionTo<OutputState>, which can be
     /// done manually or with the `TransitionTo` derive macro (requires the `derive` feature to be
     /// enabled)
     #[allow(clippy::boxed_local)]
-    pub fn next<I: State<S>, O: State<S>>(_i: Box<I>, o: O) -> Transition<S>
+    pub fn next<I: State<S, Status>, O: State<S, Status>>(_i: Box<I>, o: O) -> Transition<S, Status>
     where
         I: TransitionTo<O>,
     {
@@ -227,14 +225,10 @@ pub trait ResourceState {
 
 #[async_trait::async_trait]
 /// A trait representing a node in the state graph.
-pub trait State<S: ResourceState>: Sync + Send + 'static + std::fmt::Debug {
+pub trait State<S: ResourceState, Status>: Sync + Send + 'static + std::fmt::Debug {
     /// Provider supplies method to be executed when in this state.
-    async fn next(self: Box<Self>, state: &mut S, manifest: &S::Manifest) -> Transition<S>;
+    async fn next(self: Box<Self>, state: &mut S, manifest: &S::Manifest) -> Transition<S, Status>;
 
     /// Provider supplies JSON status patch to apply when entering this state.
-    async fn json_status(
-        &self,
-        pod_state: &mut S,
-        pod: &S::Manifest,
-    ) -> anyhow::Result<serde_json::Value>;
+    async fn json_status(&self, state: &mut S, manifest: &S::Manifest) -> anyhow::Result<Status>;
 }

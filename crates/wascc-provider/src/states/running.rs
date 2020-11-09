@@ -4,14 +4,14 @@ use k8s_openapi::api::core::v1::ContainerState as KubeContainerState;
 use k8s_openapi::api::core::v1::ContainerStateRunning as KubeContainerStateRunning;
 use k8s_openapi::api::core::v1::ContainerStatus as KubeContainerStatus;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::Time as KubeTime;
-use kubelet::state::prelude::*;
+use kubelet::pod::state::prelude::*;
 
 /// The Kubelet is running the Pod.
 #[derive(Default, Debug)]
 pub struct Running;
 
 #[async_trait::async_trait]
-impl State<PodState> for Running {
+impl State<PodState, PodStatus> for Running {
     async fn next(self: Box<Self>, _pod_state: &mut PodState, _pod: &Pod) -> Transition<PodState> {
         // Wascc has no notion of exiting so we just sleep.
         // I _think_ that periodically awaiting will allow the task to be interrupted.
@@ -20,11 +20,7 @@ impl State<PodState> for Running {
         }
     }
 
-    async fn json_status(
-        &self,
-        _pod_state: &mut PodState,
-        pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
+    async fn json_status(&self, _pod_state: &mut PodState, pod: &Pod) -> anyhow::Result<PodStatus> {
         let ts = Utc::now();
         let container_statuses: Vec<KubeContainerStatus> = pod
             .containers()

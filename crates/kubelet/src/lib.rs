@@ -10,7 +10,7 @@
 //! use kubelet::config::Config;
 //! use kubelet::pod::Pod;
 //! use kubelet::provider::Provider;
-//! use kubelet::state::prelude::*;
+//! use kubelet::pod::state::prelude::*;
 //! use kubelet::pod::state::Stub;
 //!
 //! // Create some type that will act as your provider

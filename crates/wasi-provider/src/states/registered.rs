@@ -5,7 +5,7 @@ use super::image_pull::ImagePull;
 use crate::transition_to_error;
 use crate::PodState;
 use kubelet::container::Container;
-use kubelet::state::prelude::*;
+use kubelet::pod::state::prelude::*;
 
 fn validate_pod_runnable(pod: &Pod) -> anyhow::Result<()> {
     for container in pod.containers() {
@@ -29,7 +29,7 @@ fn validate_not_kube_proxy(container: &Container) -> anyhow::Result<()> {
 pub struct Registered;
 
 #[async_trait::async_trait]
-impl State<PodState> for Registered {
+impl State<PodState, PodStatus> for Registered {
     async fn next(self: Box<Self>, _pod_state: &mut PodState, pod: &Pod) -> Transition<PodState> {
         match validate_pod_runnable(&pod) {
             Ok(_) => (),
@@ -43,7 +43,7 @@ impl State<PodState> for Registered {
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Pending, "Registered")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Pending, "Registered"))
     }
 }

@@ -1,5 +1,5 @@
 use crate::PodState;
-use kubelet::state::prelude::*;
+use kubelet::pod::state::prelude::*;
 use kubelet::volume::Ref;
 
 use super::error::Error;
@@ -12,7 +12,7 @@ use crate::transition_to_error;
 pub struct VolumeMount;
 
 #[async_trait::async_trait]
-impl State<PodState> for VolumeMount {
+impl State<PodState, PodStatus> for VolumeMount {
     async fn next(self: Box<Self>, pod_state: &mut PodState, pod: &Pod) -> Transition<PodState> {
         let client = kube::Client::new(pod_state.shared.kubeconfig.clone());
         pod_state.run_context.volumes =
@@ -27,7 +27,7 @@ impl State<PodState> for VolumeMount {
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Pending, "VolumeMount")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Pending, "VolumeMount"))
     }
 }

@@ -7,8 +7,8 @@ use k8s_openapi::api::core::v1::Pod as KubePod;
 use kube::api::{Api, PatchParams};
 use kubelet::backoff::BackoffStrategy;
 use kubelet::container::{patch_container_status, ContainerKey, Status as ContainerStatus};
+use kubelet::pod::state::prelude::*;
 use kubelet::pod::{Handle, PodKey};
-use kubelet::state::prelude::*;
 
 use super::error::Error;
 use super::starting::{start_container, ContainerHandleMap, Starting};
@@ -19,7 +19,7 @@ use crate::fail_fatal;
 pub struct Initializing;
 
 #[async_trait::async_trait]
-impl State<PodState> for Initializing {
+impl State<PodState, PodStatus> for Initializing {
     async fn next(self: Box<Self>, pod_state: &mut PodState, pod: &Pod) -> Transition<PodState> {
         let client: Api<KubePod> = Api::namespaced(
             kube::Client::new(pod_state.shared.kubeconfig.clone()),
@@ -46,9 +46,13 @@ impl State<PodState> for Initializing {
             }
 
             while let Some((name, status)) = pod_state.run_context.status_recv.recv().await {
-                if let Err(e) =
-                    patch_container_status(&client, &pod, ContainerKey::Init(name.clone()), &status)
-                        .await
+                if let Err(e) = patch_container_status(
+                    &client,
+                    &pod,
+                    &ContainerKey::Init(name.clone()),
+                    &status,
+                )
+                .await
                 {
                     error!("Unable to patch status, will retry on next update: {:?}", e);
                 }
@@ -106,7 +110,7 @@ impl State<PodState> for Initializing {
         &self,
         _pod_state: &mut PodState,
         _pmeod: &Pod,
-    ) -> anyhow::Result<serde_json::Value> {
-        make_status(Phase::Running, "Initializing")
+    ) -> anyhow::Result<PodStatus> {
+        Ok(make_status(Phase::Running, "Initializing"))
     }
 }
