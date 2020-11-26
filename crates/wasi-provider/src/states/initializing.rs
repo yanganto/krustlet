@@ -106,7 +106,7 @@ impl State<PodState, PodStatus> for Initializing {
         Transition::next(self, Starting::new(container_handles))
     }
 
-    async fn json_status(
+    async fn status(
         &self,
         _pod_state: &mut PodState,
         _pmeod: &Pod,

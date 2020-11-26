@@ -16,7 +16,7 @@ impl State<PodState, PodStatus> for CrashLoopBackoff {
         Transition::next(self, Registered)
     }
 
-    async fn json_status(
+    async fn status(
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,

@@ -230,5 +230,5 @@ pub trait State<S: ResourceState, Status>: Sync + Send + 'static + std::fmt::Deb
     async fn next(self: Box<Self>, state: &mut S, manifest: &S::Manifest) -> Transition<S, Status>;
 
     /// Provider supplies JSON status patch to apply when entering this state.
-    async fn json_status(&self, state: &mut S, manifest: &S::Manifest) -> anyhow::Result<Status>;
+    async fn status(&self, state: &mut S, manifest: &S::Manifest) -> anyhow::Result<Status>;
 }

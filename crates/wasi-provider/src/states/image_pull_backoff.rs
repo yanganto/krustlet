@@ -15,7 +15,7 @@ impl State<PodState, PodStatus> for ImagePullBackoff {
         Transition::next(self, ImagePull)
     }
 
-    async fn json_status(
+    async fn status(
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,

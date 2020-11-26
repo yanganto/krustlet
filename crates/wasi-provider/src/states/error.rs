@@ -25,7 +25,7 @@ impl State<PodState, PodStatus> for Error {
         }
     }
 
-    async fn json_status(
+    async fn status(
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,

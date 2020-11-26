@@ -20,7 +20,7 @@ impl State<PodState, PodStatus> for Running {
         }
     }
 
-    async fn json_status(&self, _pod_state: &mut PodState, pod: &Pod) -> anyhow::Result<PodStatus> {
+    async fn status(&self, _pod_state: &mut PodState, pod: &Pod) -> anyhow::Result<PodStatus> {
         let ts = Utc::now();
         let container_statuses: Vec<KubeContainerStatus> = pod
             .containers()

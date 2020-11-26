@@ -129,7 +129,7 @@ impl State<PodState, PodStatus> for Starting {
         Transition::next(self, Running)
     }
 
-    async fn json_status(
+    async fn status(
         &self,
         _pod_state: &mut PodState,
         _pod: &Pod,
