@@ -58,8 +58,8 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::Mutex as TokioMutex;
 
 mod states;
-use states::registered::Registered;
-use states::terminated::Terminated;
+use states::pod::registered::Registered;
+use states::pod::terminated::Terminated;
 
 /// The architecture that the pod targets.
 const TARGET_WASM32_WASCC: &str = "wasm32-wascc";
